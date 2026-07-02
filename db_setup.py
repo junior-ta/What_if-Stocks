@@ -13,6 +13,7 @@ c.execute(""" CREATE TABLE IF NOT EXISTS transacs
 # c.execute("INSERT INTO transacs (date, stock, capital) VALUES (datetime(),'AAPL',500.0)")
 # c.execute("DELETE FROM transacs WHERE id=1")
 
+
 #save
 conn.commit()
 conn.close()
