@@ -1,4 +1,11 @@
 import sqlite3
+import finnhub
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+finnhub_key=os.getenv("finnhub_key")
+finnhub_client = finnhub.Client(api_key=finnhub_key)
 
 
 
@@ -29,3 +36,6 @@ def create_transac(stock:str, capital):
 
 def get_networth():return
 def get_transac():return
+def get_transacyield():return
+
+print(finnhub_client.quote('SPY'))
