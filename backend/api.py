@@ -2,6 +2,7 @@ import sqlite3
 import finnhub
 import yfinance as yf
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 import os
 load_dotenv()
 
@@ -110,18 +111,86 @@ def get_networth()->float:
     
     return networth
 
+def get_yesterdays_date():
+    try:
+        # Get today's date
+        today = datetime.now().date()
+        # Subtract one day to get yesterday
+        yesterday = today - timedelta(days=1)
+        return yesterday
+    except Exception as e:
+        print(f"Error calculating yesterday's date: {e}")
+        return None
 
+def index_daily_increase(stock):
+    #get closing price from the previous day (OR THE LAST DAY WE HAVE DATA FOR)
+    
+
+    try:
+        old_p= yf.Ticker(stock).history(period='2d').iloc[0]["Close"]
+    except Exception as e:
+        print(f"Error getting yesterday's price: {e}")
+        return None
+
+    #get current price
+    try:
+        current_p= finnhub_client.quote(stock)["c"]
+    except Exception as e:
+        print(f"Error getting today's price: {e}")
+        return None
+
+    increase=((current_p - old_p) / old_p) * 100
+    
+    return increase
+
+
+def get_capital(id:int):
+    conn=sqlite3.connect("wis.db")
+    c= conn.cursor()
+
+    try:
+        c.execute("SELECT capital FROM transacs WHERE id=?",(id,))
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    capital= c.fetchall()[0][0]
+
+    conn.close()
+
+    return capital
+    
+
+def get_total_capital():
+    conn=sqlite3.connect("wis.db")
+    c= conn.cursor()
+
+    try:
+        c.execute("SELECT capital FROM transacs")
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    rows= c.fetchall()
+
+    conn.close()
+
+    total_capital=0
+    for row in rows:
+        total_capital+=row[0]
+
+    return total_capital
+
+def search_stock_symbol(input): 
+    suggestions= finnhub_client.symbol_lookup(input)
+    
+    return suggestions
+
+def get_profit(): 
+    
+    profit= get_networth() - get_total_capital()
+
+    return profit
 #.............................................
 
-def index_daily_increase():return
-
-def find_stock(): return
-
-def get_investment():return
-
-def get_total_invested():return
-
-def get_profit(): return
 
 def viz_growth_portfolio(): return
 
