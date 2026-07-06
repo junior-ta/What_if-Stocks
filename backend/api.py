@@ -9,7 +9,7 @@ finnhub_key=os.getenv("finnhub_key")
 finnhub_client = finnhub.Client(api_key=finnhub_key)
 
 
-def get_price(stock):
+def get_quote(stock):
     return finnhub_client.quote(stock)["c"]
 
 def create_transac(stock:str, capital)->int: 
@@ -109,5 +109,23 @@ def get_networth()->float:
 
     
     return networth
+
+
+#.............................................
+
+def index_daily_increase():return
+
+def find_stock(): return
+
+def get_investment():return
+
+def get_total_invested():return
+
+def get_profit(): return
+
+def viz_growth_portfolio(): return
+
+def viz_growth_stock(): return
+
 
 # print(get_networth())
