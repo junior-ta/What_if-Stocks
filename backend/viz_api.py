@@ -40,8 +40,6 @@ def _glow_traces(x, y, color=NEON_GREEN, base_width=2.5):
         )
     return traces
 
-def viz_growth_portfolio(): return
-
 def viz_growth_stock(df, ticker):
     """
     visualize the trend of a stock, the last 30 days
@@ -97,6 +95,73 @@ def fetch_stock_df(ticker, period="1mo", interval="1d"):
     raw.columns = [str(c).lower() for c in raw.columns]
     return raw[["date", "close"]]
 
+def viz_growth_portfolio(currency="$"):
+    """
+    records: list of dicts like [{"label": "Login 1", "value": 2100}, ...]
+    (pull these from your DB: last 5 rows for the user, ordered by timestamp ASC)
+    """
+    conn=sqlite3.connect("wis.db")
+    c= conn.cursor()
+
+    try:
+        c.execute("SELECT * FROM networth")
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    records= c.fetchall()
+    # records=records[:]
+
+    conn.close()
+
+    x = [r[2] for r in records]
+    y = [r[1] for r in records]
+    latest = y[-1]
+    change_pct = ((y[-1] - y[0]) / y[0] * 100) if y[0] else 0
+    is_up = change_pct >= 0
+ 
+    fig = go.Figure()
+ 
+    # soft gradient fill under the line
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=y,
+            mode="lines",
+            line=dict(color=NEON_GREEN, width=0, shape="spline", smoothing=1.1),
+            fill="tozeroy",
+            fillcolor="rgba(78,242,163,0.15)",
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+ 
+    for trace in _glow_traces(x, y):
+        fig.add_trace(trace)
+ 
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"<span style='font-size:12px;letter-spacing:2px;color:{MUTED}'>"
+                f"TOTAL PORTFOLIO VALUE</span><br>"
+                f"<span style='font-size:34px;color:{NEON_GREEN}'>{currency}{latest:,.2f}</span> "
+                f"<span style='font-size:13px;color:{'#4ef2a3' if is_up else '#f24e4e'}'>"
+                f"{'▲' if is_up else '▼'} {abs(change_pct):.1f}%</span>"
+            ),
+            x=0.02,
+            xanchor="left",
+        ),
+        paper_bgcolor=BG,
+        plot_bgcolor=BG,
+        font=dict(family="JetBrains Mono, monospace", color=NEON_GREEN),
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False, range=[min(y) * 0.9, max(y) * 1.1]),
+        margin=dict(l=20, r=20, t=90, b=20),
+        height=260,
+        showlegend=False,
+    )
+    return fig.show()
+
+
 #####..........................................#####
 #How to use viz_growth_stock
 stock='AAPL'
@@ -105,3 +170,4 @@ viz_growth_stock(stock_df,stock)
 
 
 #How to use viz_growth_portfolio
+viz_growth_portfolio()
