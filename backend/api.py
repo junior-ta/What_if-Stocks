@@ -191,10 +191,4 @@ def get_profit():
     return profit
 #.............................................
 
-
-def viz_growth_portfolio(): return
-
-def viz_growth_stock(): return
-
-
 # print(get_networth())
