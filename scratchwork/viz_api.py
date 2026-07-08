@@ -166,8 +166,10 @@ def viz_growth_portfolio(currency="$"):
 #How to use viz_growth_stock
 stock='AAPL'
 stock_df = fetch_stock_df(stock)
-viz_growth_stock(stock_df,stock)
+print(stock_df)
+
+# viz_growth_stock(stock_df,stock)
 
 
-#How to use viz_growth_portfolio
-viz_growth_portfolio()
+# #How to use viz_growth_portfolio
+# viz_growth_portfolio()
