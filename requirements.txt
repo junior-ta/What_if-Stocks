@@ -1,0 +1,6 @@
+pywebview
+yfinance
+pandas
+finnhub-python
+python-dotenv
+pyinstaller
