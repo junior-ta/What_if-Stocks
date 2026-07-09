@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CyberTrade | Portfolio Dashboard</title>
+<link rel="stylesheet" href="static/fonts/inter/400.css" />
+<link rel="stylesheet" href="static/fonts/inter/500.css" />
+<link rel="stylesheet" href="static/fonts/inter/600.css" />
+<link rel="stylesheet" href="static/fonts/inter/700.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/400.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/500.css" />
+<link rel="stylesheet" href="static/css/app.css" />
+<script src="static/vendor/plotly.min.js"></script>
+</head>
+<body class="font-body-base overflow-x-hidden bg-background text-on-surface">
+
+<div id="app-topnav"></div>
+<div id="app-sidebar"></div>
+
+<main class="md:ml-64 pt-xl min-h-screen px-md pb-md relative">
+  <div class="max-w-7xl mx-auto space-y-xl pt-lg relative z-10">
+
+    <!-- Hero Portfolio Summary -->
+    <section class="flex flex-col items-center justify-center text-center py-lg">
+      <p class="text-label-mono font-label-mono text-on-surface-variant/60 tracking-widest mb-xs uppercase">Total Portfolio Value</p>
+      <div class="flex items-center gap-md">
+        <span id="networth-value" class="text-display-lg font-display-lg text-primary-fixed glow-green">$ --</span>
+        <div id="networth-badge" class="flex items-center gap-xs bg-primary-fixed/10 px-sm py-xs rounded-full border border-primary-fixed/20">
+          <span data-icon="trending_up" data-icon-class="w-4 h-4 text-primary-fixed"></span>
+          <span id="networth-change" class="text-label-mono font-label-mono text-primary-fixed">--%</span>
+        </div>
+      </div>
+      <div class="w-full max-w-2xl h-32 mt-md">
+        <div id="networth-sparkline" style="width:100%; height:100%;"></div>
+      </div>
+    </section>
+
+    <!-- Quick Action Buttons -->
+    <section class="flex flex-col sm:flex-row gap-md justify-center px-md">
+      <button id="btn-new-transaction" class="flex items-center justify-center gap-sm px-lg py-md bg-primary-fixed text-on-primary-fixed font-label-mono text-[16px] rounded-lg shadow-[0_0_20px_rgba(86,255,168,0.3)] hover:shadow-[0_0_30px_rgba(86,255,168,0.5)] transition-all transform active:scale-95">
+        <span data-icon="add_circle" data-icon-class="w-5 h-5"></span>
+        Start New Transaction
+      </button>
+      <button id="btn-view-history" class="flex items-center justify-center gap-sm px-lg py-md border border-primary-fixed/40 text-primary-fixed font-label-mono text-[16px] rounded-lg backdrop-blur-md hover:bg-primary-fixed/10 transition-all transform active:scale-95">
+        <span data-icon="history" data-icon-class="w-5 h-5"></span>
+        View Transaction History
+      </button>
+    </section>
+
+    <!-- Popular Stocks Grid -->
+    <section>
+      <div class="flex items-center justify-between mb-lg border-l-4 border-primary-fixed pl-md">
+        <div>
+          <h2 class="text-headline-md font-headline-md text-on-surface">Popular Stocks</h2>
+          <p class="text-label-mono font-label-mono text-on-surface-variant/60">Trending high-volume equities</p>
+        </div>
+        <a href="invest.html" class="text-primary-fixed text-label-mono hover:underline">View All</a>
+      </div>
+      <div id="popular-stocks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+        <!-- populated by dashboard.js -->
+      </div>
+    </section>
+
+    <!-- Index Funds Section -->
+    <section class="pb-xl">
+      <div class="flex items-center justify-between mb-lg border-l-4 border-primary-fixed pl-md">
+        <div>
+          <h2 class="text-headline-md font-headline-md text-on-surface">Index Funds</h2>
+          <p class="text-label-mono font-label-mono text-on-surface-variant/60">Stable diversified assets</p>
+        </div>
+      </div>
+      <div id="index-funds-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+        <!-- populated by dashboard.js -->
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div id="app-mobilenav"></div>
+
+<script type="module" src="static/js/dashboard.js"></script>
+</body>
+</html>

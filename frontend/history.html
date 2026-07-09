@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CyberTrade | Transaction History</title>
+<link rel="stylesheet" href="static/fonts/inter/400.css" />
+<link rel="stylesheet" href="static/fonts/inter/500.css" />
+<link rel="stylesheet" href="static/fonts/inter/600.css" />
+<link rel="stylesheet" href="static/fonts/inter/700.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/400.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/500.css" />
+<link rel="stylesheet" href="static/css/app.css" />
+</head>
+<body class="font-body-base bg-background text-on-surface">
+
+<div id="app-topnav"></div>
+<div id="app-sidebar"></div>
+
+<main class="md:ml-64 pt-xl min-h-screen px-md pb-md">
+  <div class="max-w-6xl mx-auto pt-lg space-y-lg">
+
+    <div class="flex items-center justify-between border-l-4 border-primary-fixed pl-md">
+      <div>
+        <h1 class="text-headline-md font-headline-md text-on-surface">Transaction History</h1>
+        <p class="text-label-mono font-label-mono text-on-surface-variant/60">Every buy order and how much it's made you</p>
+      </div>
+      <div class="flex gap-md text-right">
+        <div>
+          <p class="text-label-mono font-label-mono text-on-surface-variant/60 uppercase">Total P/L</p>
+          <p id="total-pl" class="text-data-lg font-data-lg text-primary-fixed">$--</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto terminal-scroll">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-white/10 text-label-mono font-label-mono text-on-surface-variant/60 uppercase text-xs">
+              <th class="px-md py-sm">Symbol</th>
+              <th class="px-md py-sm">Date</th>
+              <th class="px-md py-sm">Invested</th>
+              <th class="px-md py-sm">Current Value</th>
+              <th class="px-md py-sm">P/L ($)</th>
+              <th class="px-md py-sm">P/L (%)</th>
+            </tr>
+          </thead>
+          <tbody id="transactions-tbody">
+            <tr>
+              <td colspan="6" class="px-md py-lg text-center text-on-surface-variant/50 font-label-mono">Loading transactions…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="app-mobilenav"></div>
+
+<script type="module" src="static/js/history.js"></script>
+</body>
+</html>

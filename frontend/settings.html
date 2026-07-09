@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CyberTrade | Settings</title>
+<link rel="stylesheet" href="static/fonts/inter/400.css" />
+<link rel="stylesheet" href="static/fonts/inter/500.css" />
+<link rel="stylesheet" href="static/fonts/inter/600.css" />
+<link rel="stylesheet" href="static/fonts/inter/700.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/400.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/500.css" />
+<link rel="stylesheet" href="static/css/app.css" />
+</head>
+<body class="font-body-base bg-background text-on-surface">
+
+<div id="app-topnav"></div>
+<div id="app-sidebar"></div>
+
+<main class="md:ml-64 pt-xl min-h-screen px-md pb-md">
+  <div class="max-w-2xl mx-auto pt-lg space-y-lg">
+    <div class="border-l-4 border-primary-fixed pl-md">
+      <h1 class="text-headline-md font-headline-md text-on-surface">Settings</h1>
+      <p class="text-label-mono font-label-mono text-on-surface-variant/60">Manage your virtual trading account</p>
+    </div>
+
+    <div class="glass-card rounded-2xl p-lg space-y-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-body-base font-headline-md">Trader Name</p>
+          <p class="text-label-mono font-label-mono text-on-surface-variant/60">Shown in the sidebar</p>
+        </div>
+        <input id="trader-name-input" class="bg-white/5 border border-white/10 rounded-lg px-md py-sm font-label-mono text-on-surface w-48 focus:border-primary-fixed outline-none" placeholder="Trader One" />
+      </div>
+
+      <div class="flex items-center justify-between border-t border-white/5 pt-md">
+        <div>
+          <p class="text-body-base font-headline-md text-error">Reset Portfolio</p>
+          <p class="text-label-mono font-label-mono text-on-surface-variant/60">Wipes transactions & resets starting capital</p>
+        </div>
+        <button id="reset-portfolio-btn" class="px-md py-sm border border-error/40 text-error font-label-mono text-label-mono rounded-lg hover:bg-error/10 transition-colors">
+          Reset
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="app-mobilenav"></div>
+
+<script type="module" src="static/js/settings.js"></script>
+</body>
+</html>

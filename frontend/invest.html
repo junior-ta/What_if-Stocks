@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CyberTrade | Invest</title>
+<link rel="stylesheet" href="static/fonts/inter/400.css" />
+<link rel="stylesheet" href="static/fonts/inter/500.css" />
+<link rel="stylesheet" href="static/fonts/inter/600.css" />
+<link rel="stylesheet" href="static/fonts/inter/700.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/400.css" />
+<link rel="stylesheet" href="static/fonts/jetbrains-mono/500.css" />
+<link rel="stylesheet" href="static/css/app.css" />
+<script src="static/vendor/plotly.min.js"></script>
+</head>
+<body class="font-body-base bg-background text-on-surface">
+
+<div id="app-topnav"></div>
+<div id="app-sidebar"></div>
+
+<main class="md:ml-64 pt-xl min-h-screen">
+  <div class="p-md md:p-gutter max-w-5xl mx-auto">
+
+    <!-- Search Bar -->
+    <div class="relative mb-lg">
+      <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+        <span data-icon="search" data-icon-class="w-5 h-5 text-primary-fixed/60"></span>
+      </div>
+      <input id="symbol-search" autocomplete="off"
+        class="block w-full pl-xl pr-md py-md bg-surface-container/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary-fixed/30 focus:border-primary-fixed outline-none text-headline-md-mobile font-headline-md-mobile placeholder-on-surface-variant/30 backdrop-blur-md transition-all"
+        placeholder="Search stock tickers (e.g. NVDA, AAPL, TSLA)..." type="text" />
+      <div id="search-results" class="absolute w-full mt-xs glass-card rounded-xl overflow-hidden hidden z-20"></div>
+    </div>
+
+    <!-- Main Quote Panel -->
+    <div class="glass-card rounded-2xl p-md md:p-lg mb-gutter">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md mb-lg">
+        <div>
+          <h1 id="quote-name" class="text-[48px] font-bold leading-tight text-primary-fixed">Select a stock</h1>
+          <div class="flex items-center gap-md mt-xs">
+            <div class="flex flex-col">
+              <span class="text-label-mono font-label-mono text-on-surface-variant/60 uppercase">Current Price</span>
+              <span id="quote-price" class="text-data-lg font-data-lg text-on-surface">$--</span>
+            </div>
+            <div class="h-10 w-px bg-white/10 mx-xs"></div>
+            <div class="flex flex-col">
+              <span class="text-label-mono font-label-mono text-on-surface-variant/60 uppercase">Your Shares</span>
+              <span id="quote-shares" class="text-data-lg font-data-lg text-primary-fixed">-- </span>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-sm" id="period-toggle">
+          <button data-period="1D" class="period-btn px-md py-sm glass-card rounded-lg font-label-mono text-label-mono text-on-surface">1D</button>
+          <button data-period="1W" class="period-btn px-md py-sm glass-card rounded-lg font-label-mono text-label-mono text-on-surface">1W</button>
+          <button data-period="1M" class="period-btn px-md py-sm glass-card rounded-lg font-label-mono text-label-mono text-primary-fixed border-primary-fixed">1M</button>
+          <button data-period="1Y" class="period-btn px-md py-sm glass-card rounded-lg font-label-mono text-label-mono text-on-surface">1Y</button>
+        </div>
+      </div>
+
+      <div class="h-[300px] md:h-[400px] relative overflow-hidden bg-white/5 rounded-xl p-md">
+        <div class="relative z-10 w-full h-full flex flex-col">
+          <div class="flex justify-between items-start mb-md">
+            <div class="text-label-mono font-label-mono text-on-surface-variant/60 uppercase tracking-widest text-[10px]">Real-time Performance</div>
+            <div class="flex items-center gap-xs text-primary-fixed">
+              <span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+              <span class="text-label-mono font-label-mono text-[10px]">LIVE FEED</span>
+            </div>
+          </div>
+          <div class="flex-grow" id="performance-chart" style="width:100%; height:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Investment Terminal -->
+    <div class="glass-card rounded-2xl p-md md:p-lg border-primary-fixed/20">
+      <div class="flex items-center gap-sm mb-lg">
+        <span data-icon="rocket_launch" data-icon-class="w-5 h-5 text-primary-fixed"></span>
+        <h2 class="text-headline-md-mobile font-headline-md-mobile text-on-surface uppercase tracking-tight">Investment Terminal</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-lg items-end">
+        <div class="space-y-sm">
+          <label class="text-label-mono font-label-mono text-on-surface-variant/70 uppercase">Amount to Invest (USD)</label>
+          <div class="relative group">
+            <span class="absolute left-md top-1/2 -translate-y-1/2 text-primary-fixed font-data-lg">$</span>
+            <input id="invest-amount" class="w-full bg-transparent border-0 border-b-2 border-white/10 focus:border-primary-fixed focus:ring-0 text-[48px] font-bold pl-lg transition-all text-on-surface" placeholder="0.00" type="number" min="0" step="0.01" />
+          </div>
+        </div>
+        <div class="space-y-md">
+          <div class="flex justify-between items-center glass-card p-sm rounded-lg bg-white/5">
+            <div class="text-label-mono font-label-mono text-on-surface-variant/60">ESTIMATED SHARES</div>
+            <div id="estimated-shares" class="text-data-lg font-data-lg text-primary-fixed">0.00</div>
+          </div>
+          <button id="execute-buy" class="w-full py-md bg-primary-container text-on-primary-container font-headline-md-mobile font-bold rounded-xl order-glow hover:scale-[1.01] active:scale-[0.99] transition-all">
+            EXECUTE BUY ORDER
+          </button>
+          <div class="flex justify-between px-xs">
+            <span id="total-invested-line" class="text-label-mono font-label-mono text-on-surface-variant/60">Total Invested: $--</span>
+            <span class="text-label-mono font-label-mono text-on-surface-variant/60">Shares priced at close on buy date</span>
+          </div>
+        </div>
+      </div>
+      <div id="buy-feedback" class="mt-md text-center text-label-mono font-label-mono hidden"></div>
+
+      <div class="mt-lg text-center">
+        <a href="history.html" class="text-on-surface-variant/50 font-label-mono text-label-mono hover:text-primary-fixed transition-colors inline-flex items-center gap-xs">
+          <span data-icon="history" data-icon-class="w-4 h-4"></span>
+          View Recent Transactions
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="app-mobilenav"></div>
+
+<script type="module" src="static/js/invest.js"></script>
+</body>
+</html>
