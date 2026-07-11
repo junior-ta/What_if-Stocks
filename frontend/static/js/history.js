@@ -1,16 +1,6 @@
-// =============================================================================
-// history.js — Transaction History page (frontend/history.html)
-// =============================================================================
 // Pulls every transaction from api.getTransacs() (your `transacs` table:
 // id, date, symbol, amount) and, for each one, calls
 // api.getTransacCurrentValue() to find out what it's worth today.
-//
-// IMPORTANT: getTransacCurrentValue() maps to backend.get_transac_yield(),
-// which does a real yfinance historical lookup + a live Finnhub quote for
-// EVERY row. With N transactions that's N slow network round-trips run in
-// parallel below — fine for a handful of transactions, but worth knowing
-// if this ever feels slow with a large history: that cost lives in your
-// backend function, not in this file.
 // =============================================================================
 
 import { renderShell } from "./shell.js";
@@ -71,8 +61,7 @@ async function init() {
       return;
     }
 
-    // Every row needs its own network round-trip (see file header) — run
-    // them all in parallel instead of awaiting one at a time.
+    //run every row in parallel instead of awaiting one at a time.
     const rows = await Promise.all(transacs.map(rowHtml));
     // Most recent transaction first.
     tbody.innerHTML = rows

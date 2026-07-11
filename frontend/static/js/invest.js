@@ -1,6 +1,3 @@
-// =============================================================================
-// invest.js — Invest / Check Quotes page (frontend/invest.html)
-// =============================================================================
 // Three things happen on this page:
 //   1. Search bar -> api.searchStockSymbol() (Finnhub symbol_lookup) shows a
 //      dropdown; picking a result calls loadSymbol().
@@ -9,11 +6,6 @@
 //   3. The buy form -> api.createTransac(symbol, amount), which just
 //      inserts a (date, stock, capital) row — no share count is stored at
 //      buy time in your schema, it's recomputed later on demand.
-//
-// Note: your backend has no "buying power" / cash balance concept (see
-// shell.js's header comment), so this page shows "Total Invested" (cost
-// basis) instead, purely informational — it does NOT limit how much you
-// can invest.
 // =============================================================================
 
 import { renderShell } from "./shell.js";
@@ -24,11 +16,8 @@ let currentSymbol = null;
 let currentPrice = 0;
 let currentPeriod = "1M";
 let searchDebounce = null;
-// get_quote() only returns a price, not a company name (Finnhub's quote
-// endpoint doesn't include one) — so we remember the "description" text
-// from whichever search result the user actually clicked, and fall back
-// to just showing the ticker symbol if we don't have one (e.g. arriving
-// via a dashboard "Invest" link with no prior search).
+// remember the "description" text from whichever search result the user actually clicked, and fall back
+// to just showing the ticker symbol if we don't have one (e.g. arriving via a dashboard "Invest" link with no prior search).
 let currentName = null;
 
 function fmtMoney(n) {
@@ -93,9 +82,7 @@ async function loadSymbol(symbol, name = null) {
  * Live-updates the "ESTIMATED SHARES" readout as the user types an amount.
  * This is a client-side ESTIMATE only (amount / current quote price) — the
  * actual share count your backend later computes for this transaction
- * uses the closing price ON THE TRANSACTION'S CALENDAR DATE (see
- * get_transac_yield / get_shares_owned in backend/__init__.py), which
- * will usually be very close to, but not always exactly, this number.
+ * uses the closing price ON THE TRANSACTION'S CALENDAR DATE 
  */
 function recomputeEstimatedShares() {
   const amountInput = document.getElementById("invest-amount");
@@ -146,8 +133,7 @@ async function init() {
       renderSearchResults([]);
       return;
     }
-    // Debounce so we're not firing a Finnhub symbol_lookup call on every
-    // single keystroke.
+    // Debounce so we're not firing a Finnhub symbol_lookup call on every single keystroke.
     searchDebounce = setTimeout(async () => {
       try {
         const results = await api.searchStockSymbol(query);
@@ -201,7 +187,7 @@ async function init() {
 
   await refreshTotalInvested();
 
-  // Pre-select a symbol if navigated here with ?symbol=NVDA (e.g. from a
+  // Pre-select a symbol if navigated here with ?symbol=NVDA (for example: from a
   // dashboard "Invest" button). We don't have a company name in that case
   // since no search happened, so loadSymbol() just falls back to the
   // ticker itself as the display name.

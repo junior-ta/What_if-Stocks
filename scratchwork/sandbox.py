@@ -35,12 +35,12 @@ conn=sqlite3.connect("wis.db")
 c= conn.cursor()
 
 try:
-    c.execute("SELECT * FROM networth")
+    c.execute("SELECT nw FROM networth")
 except sqlite3.Error as e:
     print("Database error:", e)
 
 records= c.fetchall()
-records=records[::-1]
+records=records[len(records)-1][0]
 
 conn.close()
 print(records)

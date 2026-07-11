@@ -32,6 +32,7 @@ def _ensure_schema():
     c = conn.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS networth (id INTEGER PRIMARY KEY, nw FLOAT, date TEXT)")
     c.execute("CREATE TABLE IF NOT EXISTS transacs (id INTEGER PRIMARY KEY, date TEXT, stock TEXT, capital FLOAT)")
+    c.execute("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT)")
     conn.commit()
     conn.close()
 
@@ -42,6 +43,49 @@ _ensure_schema()
 # =============================================================================
 # Functionalities
 # =============================================================================
+
+def get_name():
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    try:
+        c.execute("SELECT name FROM user")
+        conn.commit()
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    names=c.fetchall()
+    conn.close()
+
+    if len(names)==0:
+        return "None"
+    
+    name=names[len(names)-1][0]
+
+    return name
+
+
+def set_user_name(name: str):
+    if len(name)==0:
+        return
+    
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+    # INSERT OR REPLACE with a fixed id=1 keeps this a single "current user"
+    # row instead of accumulating a new row every time the name changes.
+    c.execute("INSERT OR REPLACE INTO user (id, name) VALUES (1, ?)", (name,))
+    conn.commit()
+    conn.close()
+
+def resetPortfolio():
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    c.execute("DELETE FROM networth")
+    c.execute("DELETE FROM transacs")
+
+    conn.commit()
+    conn.close()
 
 def get_quote(stock):
     return finnhub_client.quote(stock)["c"]

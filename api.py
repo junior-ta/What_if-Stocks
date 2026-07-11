@@ -24,6 +24,15 @@ def _safe(fn, *args, **kwargs):
 
 
 class Api:
+# -----Admin-----
+    def get_name(self):
+        return _safe(backend.get_name)
+    
+    def set_user_name(self, name):
+        return _safe(backend.set_user_name, name.strip())
+    
+    def resetPortfolio(self):
+        return _safe(backend.resetPortfolio)
 
     # -----Portfolio value-----
     def get_portfolio_value(self):

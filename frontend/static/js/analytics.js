@@ -1,6 +1,3 @@
-// =============================================================================
-// analytics.js — Analytics page (frontend/analytics.html)
-// =============================================================================
 // Four independent sections, all fed from the same set of backend calls:
 //   1. Stat cards: Total Invested (cost basis), Total P/L, Win Rate
 //   2. Portfolio growth chart: full `networth` table history (one point
@@ -8,11 +5,6 @@
 //   3. Profit/Loss by Position: one bar per transaction, dollar profit
 //      (current value - amount invested)
 //   4. Recent Transactions: last 5 transactions with their P/L
-//
-// Every transaction needs its own getTransacCurrentValue() network call
-// (see history.js's header comment for why) — this file fetches the
-// transaction list once and reuses it across sections 1, 3, and 4 instead
-// of re-fetching it three times.
 // =============================================================================
 
 import { renderShell } from "./shell.js";
@@ -23,7 +15,7 @@ function fmtMoney(n) {
   return `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 }
 
-/** Fetches current value + profit ($) for every transaction, once, in parallel. */
+/** Fetches current value + profit ($) for every transaction */
 async function loadTransactionProfits(transacs) {
   return Promise.all(
     transacs.map(async (t) => {
@@ -120,8 +112,7 @@ async function init() {
     console.warn("get_transacs failed", e);
   }
 
-  // Fetch each transaction's current value ONCE, then reuse it across the
-  // stat cards, the P/L chart, and the recent-transactions table below —
+  // Fetch each transaction's current value ONCE, then reuse it across the stat cards, the P/L chart, and the recent-transactions table below — 
   // avoids tripling the number of slow backend calls.
   const enrichedTransacs = transacs.length ? await loadTransactionProfits(transacs) : [];
 

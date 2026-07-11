@@ -6,13 +6,6 @@
 // page's HTML just has three empty placeholder divs
 // (#app-topnav, #app-sidebar, #app-mobilenav) — renderShell() replaces
 // them with the real markup and wires up their click handlers.
-//
-// NOTE on the sidebar stat: your backend has no concept of "available
-// cash" — there's no starting balance that goes down as you invest, you
-// can invest any dollar amount at any time, and performance is tracked by
-// comparing cost basis (get_total_capital) to current value
-// (get_portfolio_value). So the sidebar shows "Total Invested" (cost
-// basis) instead of an "$X Available" balance.
 // =============================================================================
 
 import { hydrateIcons } from "./icons.js";
@@ -42,9 +35,9 @@ function topNavHtml(active) {
   ).join("");
 
   return `
-  <nav class="fixed top-0 w-full z-50 flex justify-between items-center px-md py-sm bg-surface-variant/10 backdrop-blur-[24px] border-b border-white/10">
+  <nav id="app-topnav" class="fixed top-0 w-full z-50 flex justify-between items-center px-md py-sm bg-surface-variant/10 backdrop-blur-[24px] border-b border-white/10">
     <div class="flex items-center gap-md">
-      <span class="text-headline-md font-headline-md tracking-tighter text-primary-fixed">CyberTrade</span>
+      <span class="text-headline-md font-headline-md tracking-tighter text-primary-fixed">What if - Trading</span>
       <div class="hidden md:flex items-center gap-md ml-lg">${links}</div>
     </div>
   </nav>`;
@@ -64,14 +57,14 @@ function sidebarHtml(active, traderName, totalInvestedLabel) {
   }).join("");
 
   return `
-  <aside class="fixed left-0 top-0 h-full z-40 w-64 pt-xl hidden md:flex flex-col justify-between bg-surface-container/10 backdrop-blur-[40px] border-r border-white/10">
+  <aside id="app-sidebar" class="fixed left-0 top-0 h-full z-40 w-64 pt-xl hidden md:flex flex-col justify-between bg-surface-container/10 backdrop-blur-[40px] border-r border-white/10">
     <div class="px-md mt-md">
       <div class="flex items-center gap-sm mb-lg">
         <div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center">
           <span data-icon="person" data-icon-class="w-5 h-5 text-primary-fixed"></span>
         </div>
         <div>
-          <p class="text-body-base font-headline-md text-primary-fixed">${traderName}</p>
+          <p id="sidebar-trader-name" class="text-body-base font-headline-md text-primary-fixed">${traderName}</p>
           <p id="sidebar-total-invested" class="text-label-mono font-label-mono text-on-surface-variant/60">${totalInvestedLabel} Invested</p>
         </div>
       </div>
@@ -80,12 +73,7 @@ function sidebarHtml(active, traderName, totalInvestedLabel) {
         Invest Now
       </button>
     </div>
-    <div class="px-md pb-md space-y-base">
-      <a class="flex items-center gap-sm px-md py-sm text-on-surface-variant/60 hover:text-on-surface transition-colors" href="#" id="logout-link">
-        <span data-icon="logout" data-icon-class="w-5 h-5 text-error"></span>
-        <span class="text-label-mono font-label-mono text-error">Logout</span>
-      </a>
-    </div>
+
   </aside>`;
 }
 
@@ -109,7 +97,7 @@ function mobileNavHtml(active) {
     .join("");
 
   return `
-  <div class="fixed bottom-0 w-full z-50 md:hidden bg-surface-container/20 backdrop-blur-xl border-t border-white/5 px-md py-sm flex justify-around">
+  <div id="app-mobilenav" class="fixed bottom-0 w-full z-50 md:hidden bg-surface-container/20 backdrop-blur-xl border-t border-white/5 px-md py-sm flex justify-around">
     ${items}
   </div>`;
 }
@@ -133,8 +121,13 @@ export async function renderShell(activePage) {
     console.warn("Could not load total invested capital", e);
   }
 
+  //trying to get a username
+  const tempname= await api.getname();
+  if (tempname=="None"){name= "Trader One"} else {name=tempname}
+
+
   if (topnavEl) topnavEl.outerHTML = topNavHtml(activePage);
-  if (sidebarEl) sidebarEl.outerHTML = sidebarHtml(activePage, "Trader One", totalInvestedLabel);
+  if (sidebarEl) sidebarEl.outerHTML = sidebarHtml(activePage, name, totalInvestedLabel);
   if (mobilenavEl) mobilenavEl.outerHTML = mobileNavHtml(activePage);
 
   // Icons are inserted as data-icon="name" placeholders in the markup
@@ -144,12 +137,12 @@ export async function renderShell(activePage) {
   const investBtn = document.getElementById("invest-now-btn");
   if (investBtn) investBtn.addEventListener("click", () => (window.location.href = "invest.html"));
 
-  const logoutLink = document.getElementById("logout-link");
-  if (logoutLink)
-    logoutLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      // No auth/session system in the current backend — wire this up if
-      // you add one later.
-      console.log("logout clicked");
-    });
+  // const logoutLink = document.getElementById("logout-link");
+  // if (logoutLink)
+  //   logoutLink.addEventListener("click", (e) => {
+  //     e.preventDefault();
+  //     // No auth/session system in the current backend — wire this up if
+  //     // you add one later.
+  //     console.log("logout clicked");
+  //   });
 }

@@ -1,13 +1,5 @@
-// =============================================================================
-// charts.js
-// =============================================================================
 // Shared chart builders, used by dashboard.js / invest.js / analytics.js.
-// Uses the local vendor/plotly.min.js bundle (no CDN, works fully offline).
-//
-// All charts use the neon "glow" trick from your Cyber-Finance design: since
-// Plotly has no CSS blur filter, we fake it by drawing the *same*
-// spline-smoothed line 4 times — each pass a bit wider and more transparent
-// — stacked under one crisp, fully-opaque top line. See glowTraces() below.
+// Uses the local vendor/plotly.min.js bundle so it works fully offline.
 // =============================================================================
 
 const NEON_GREEN = "#56ffa8";

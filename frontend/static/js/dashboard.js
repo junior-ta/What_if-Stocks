@@ -3,16 +3,10 @@
 //      (getPortfolioValue() for the number, getNetworthHistory() for the chart)
 //   2. Popular Stocks grid — a fixed watchlist, one getQuote() call each
 //   3. Index Funds grid — same idea, for SPY/QQQ/DIA
-//
-// Every stock card needs its OWN network round-trip (Finnhub + yfinance,
-// via api.getQuote), so this file fires them all in parallel with
-// Promise.all() rather than one at a time — with 9 total tickers on this
-// page (6 watchlist + 3 index funds), doing them sequentially would make
-// the page visibly crawl.
-// =============================================================================
+// ==================================================
 
 import { renderShell } from "./shell.js";
-import { hydrateIcons } from "./icons.js";
+import { hydrateIcons, iconSvg } from "./icons.js";
 import { api } from "./bridge.js";
 import { renderNetWorthSparkline } from "./charts.js";
 
@@ -51,7 +45,7 @@ function stockCardHtml(entry, quote) {
   const barWidth = hasChange ? Math.min(100, Math.max(10, Math.abs(quote.change_pct) * 10 + 40)) : 40;
   const priceClass = hasChange && quote.change_pct >= 0 ? "text-primary-fixed" : "";
 
-  const logoPath = `logos/${entry.symbol.toLowerCase()}.png`;
+  const logoPath = `static/logos/${entry.symbol.toLowerCase()}.png`;
   const fallbackIconSvg = iconSvg(entry.icon, "w-5 h-5 text-on-surface-variant").replace(/"/g, "&quot;");
  
   return `
@@ -103,11 +97,6 @@ function indexFundCardHtml(fund, quote) {
 
 /**
  * Hero "$ total portfolio value" figure + the sparkline underneath it.
- * The BIG number comes from getPortfolioValue() (live, computed fresh on
- * every call). The sparkline comes from a SEPARATE call, getNetworthHistory()
- * — that's the login-by-login snapshot history stored in the `networth`
- * table, which is a different data source than the live total. See
- * bridge.js / api.py for why these two aren't the same call.
  */
 async function loadNetWorth() {
   const [liveValue, history] = await Promise.all([
@@ -150,8 +139,7 @@ async function loadNetWorth() {
 
 async function loadWatchlist() {
   const grid = document.getElementById("popular-stocks-grid");
-  // First paint with placeholders so the page doesn't sit blank while the
-  // 6 quote requests are in flight.
+  // First paint with placeholders so the page doesn't sit blank while the 6 quote requests are in flight.
   grid.innerHTML = WATCHLIST.map((e) => stockCardHtml(e, null)).join("");
   hydrateIcons(grid);
 
@@ -176,8 +164,6 @@ async function init() {
     window.location.href = "history.html";
   });
 
-  // These three sections are fully independent of each other, so load
-  // them all in parallel instead of one after another.
   await Promise.all([loadNetWorth(), loadWatchlist(), loadIndexFunds()]);
 }
 

@@ -1,5 +1,4 @@
-// Minimal offline icon set (stroke-based, mimics Material Symbols look)
-// so the app never depends on a Google Fonts icon-font at runtime.
+// Minimal offline icon set (stroke-based, mimics Material Symbols look) so the app never depends on a Google Fonts icon-font at runtime.
 export const ICONS = {
   pie_chart: '<path d="M11 2v9l7.87 4.5A9 9 0 1 1 11 2Z"/><path d="M20.5 12A8.5 8.5 0 0 0 12 3.5V12h8.5Z"/>',
   query_stats: '<path d="M4 20V10M10 20V4M16 20v-7M22 20V13"/>',

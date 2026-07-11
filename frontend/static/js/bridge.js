@@ -1,6 +1,3 @@
-// =============================================================================
-// bridge.js
-// =============================================================================
 // Every page talks to Python through this one file instead of calling
 // `window.pywebview.api.*` directly. Two reasons:
 //
@@ -73,6 +70,9 @@ async function call(method, ...args) {
 // Public, camelCase API used by every page. Each of these maps 1:1 to a
 // method on the Api class in api.py — see that file for exact return shapes.
 export const api = {
+  getname: () => call("get_name"), //get eitehr a name or "None"
+  setUserName: (name) => call("set_user_name", name),
+  resetPortfolio: () => call("resetPortfolio"),
   getPortfolioValue: () => call("get_portfolio_value"), // live total value of all positions (float)
   getNetworthHistory: (limit = null) => call("get_networth_history", limit), // [{date, value}, ...]
   getTotalCapital: () => call("get_total_capital"), // total $ ever invested (float)
