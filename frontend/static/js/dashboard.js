@@ -1,6 +1,3 @@
-// =============================================================================
-// dashboard.js — Portfolio page (frontend/dashboard.html)
-// =============================================================================
 // Loads and renders three independent things on this page:
 //   1. Hero "$ total portfolio value" figure + sparkline chart
 //      (getPortfolioValue() for the number, getNetworthHistory() for the chart)
@@ -54,11 +51,15 @@ function stockCardHtml(entry, quote) {
   const barWidth = hasChange ? Math.min(100, Math.max(10, Math.abs(quote.change_pct) * 10 + 40)) : 40;
   const priceClass = hasChange && quote.change_pct >= 0 ? "text-primary-fixed" : "";
 
+  const logoPath = `logos/${entry.symbol.toLowerCase()}.png`;
+  const fallbackIconSvg = iconSvg(entry.icon, "w-5 h-5 text-on-surface-variant").replace(/"/g, "&quot;");
+ 
   return `
   <div class="glass-card rounded-xl p-md group">
     <div class="flex justify-between items-start mb-md">
-      <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-        <span data-icon="${entry.icon}" data-icon-class="w-5 h-5 text-on-surface-variant"></span>
+      <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 overflow-hidden">
+        <img src="${logoPath}" alt="${entry.symbol} logo" class="w-full h-full object-cover"
+             onerror="this.outerHTML='${fallbackIconSvg}'" />
       </div>
       <div class="text-right">
         <span class="text-label-mono font-label-mono text-on-surface-variant/60">${entry.symbol}</span>
