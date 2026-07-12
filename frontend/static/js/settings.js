@@ -8,11 +8,18 @@ async function saveName(input) {
   await renderShell("settings"); // re-runs your getUserName() logic, refreshing the sidebar
 }
 
+
+async function reset() {
+  await api.resetPortfolio()
+  await renderShell("settings");
+
+}
+
 async function init() {
   await renderShell("settings");
 
   document.getElementById("reset-portfolio-btn").addEventListener("click", () => {
-    if (!confirm("This will wipe all transactions and reset your starting capital. Continue?")) api.resetPortfolio();
+    if (confirm("This will wipe all transactions and reset your starting capital. Continue?")) reset();
   });
 
   const nameInput = document.getElementById("trader-name-input");

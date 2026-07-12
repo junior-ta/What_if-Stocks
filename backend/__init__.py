@@ -11,6 +11,7 @@ import finnhub
 import yfinance as yf
 import pandas as pd
 from dotenv import load_dotenv
+import time
 from datetime import datetime, timedelta
 import os
 
@@ -31,7 +32,7 @@ def _ensure_schema():
     conn = sqlite3.connect("wis.db")
     c = conn.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS networth (id INTEGER PRIMARY KEY, nw FLOAT, date TEXT)")
-    c.execute("CREATE TABLE IF NOT EXISTS transacs (id INTEGER PRIMARY KEY, date TEXT, stock TEXT, capital FLOAT)")
+    c.execute("CREATE TABLE IF NOT EXISTS transacs (id INTEGER PRIMARY KEY, date TEXT, stock TEXT, capital FLOAT, shares FLOAT)")
     c.execute("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY, name TEXT)")
     conn.commit()
     conn.close()
@@ -40,169 +41,106 @@ def _ensure_schema():
 _ensure_schema()
 
 
+
+
 # =============================================================================
 # Functionalities
 # =============================================================================
 
-def get_name():
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    try:
-        c.execute("SELECT name FROM user")
-        conn.commit()
-    except sqlite3.Error as e:
-        print("Database error:", e)
-
-    names=c.fetchall()
-    conn.close()
-
-    if len(names)==0:
-        return "None"
-    
-    name=names[len(names)-1][0]
-
-    return name
-
-
-def set_user_name(name: str):
-    if len(name)==0:
-        return
-    
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-    # INSERT OR REPLACE with a fixed id=1 keeps this a single "current user"
-    # row instead of accumulating a new row every time the name changes.
-    c.execute("INSERT OR REPLACE INTO user (id, name) VALUES (1, ?)", (name,))
-    conn.commit()
-    conn.close()
-
-def resetPortfolio():
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    c.execute("DELETE FROM networth")
-    c.execute("DELETE FROM transacs")
-
-    conn.commit()
-    conn.close()
-
 _quote_cache = {}  #a dict with keys: symbol and values: (price, timestamp)
 def get_quote(stock):
-    now = datetime.time()
-    if stock in _quote_cache and now - _quote_cache[stock][1] < 120:  #only update cache every 2 mins
+    now = time.time()
+    if stock in _quote_cache and now - _quote_cache[stock][1] < 60:  #only update cache every minute
+        # print("cache hit")
         return _quote_cache[stock][0]
     
     price = finnhub_client.quote(stock)["c"]
     _quote_cache[stock] = (price, now)
+    # print("cache miss")
 
     return price
 
 
-def create_transac(stock: str, capital) -> int:
-    #append a transaction to the database
-
-    # validate that capital is numeric
-    try:
-        capital = float(capital)
-    except ValueError:
-        print("Please enter a valid capital for this transaction (should be a number higher than $0.0)")
-
-    # validate that capital is greater than 0.0
-    if capital <= 0.0:
-        raise Exception("Please enter a valid capital for this transaction (should be a number higher than $0.0)")
-
-    ###Insert the transaction in the database###
-    # connect
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    try:
-        c.execute("INSERT INTO transacs (date, stock, capital) VALUES (datetime(),?,?)", (stock, capital))
-        conn.commit()
-    except sqlite3.Error as e:
-        print("Database error:", e)
-
-    conn.close()
-
-    return 1
-
-
 def get_transacs():
     # get all the transactions ever done by the user
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    try:
-        c.execute("SELECT * FROM transacs")
-    except sqlite3.Error as e:
-        print("Database error:", e)
-
-    transactions = c.fetchall()
+        try:
+            c.execute("SELECT * FROM transacs")
+            transactions = c.fetchall()
+        except sqlite3.Error as e:
+            print("Database error:", e)
+            transactions = []
 
     conn.close()
-
     return transactions
 
 
 def get_transac_yield(id: int) -> float:
-    # get how much a particular transaction yielded
+# get how much a particular transaction earned you
 
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    try:
-        c.execute("SELECT * FROM transacs WHERE id=?", (id,))
-    except sqlite3.Error as e:
-        print("Database error:", e)
+        try:
+            c.execute("SELECT * FROM transacs WHERE id=?", (id,))
+            transaction = c.fetchall()[0]
+        except sqlite3.Error as e:
+            print("Database error:", e)
+            transaction=()
 
-    transaction = c.fetchall()[0]
+    
+
+        transac_date = transaction[1]
+        stock = transaction[2]
+        capital = transaction[3]
+        shares= transaction[4]
+
+        # covert db date to python dt
+        transac_date = transac_date.split(" ")[0]
+
+###calculate the yield###
+        current_p = get_quote(stock)
+        revenue = shares * current_p
+
     conn.close()
-
-    transac_date = transaction[1]
-    stock = transaction[2]
-    capital = transaction[3]
-
-    # covert db date to python dt
-    transac_date = transac_date.split(" ")[0]
-
-    ###calculate the yield###
-    buying_p = yf.Ticker(stock).history(start=transac_date).iloc[0]["Close"]
-    actual_p = get_quote(stock)
-
-    shares = capital / buying_p
-    revenue = shares * actual_p
-
     return revenue
 
-_networth_cache=[]
+
+_networth_cache={
+    "value": None,
+    "timestamp": 0,
+    # "table_detector":0,
+}
 def get_networth() -> float:
-    #get the total portfolio value
+#get the total portfolio value
 
-    #check cache
-    now = datetime.time()
-    if len(_networth_cache)>0 and now - _networth_cache[1] < 120:  #only update cache every 2 mins
-        return _networth_cache[0]
+#get the transactions
+    transactions = get_transacs()
 
-    #cache failed or expired, compute networth
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
 
-    try:
-        c.execute("SELECT * FROM transacs")
-    except sqlite3.Error as e:
-        print("Database error:", e)
+#check cache
+    now = time.time()
 
-    transactions = c.fetchall()
-    conn.close()
+    #check cache only if there was no new transactions
+    if "table_detector" in _networth_cache and _networth_cache["table_detector"]==len(transactions): 
+        if now - _networth_cache["timestamp"] < 120 and _networth_cache["value"] is not None:  #cache misses if its >2mins old
+            # print("cache hit")
+            return _networth_cache["value"]
 
+#cache failed or expired, compute current portfolio value
+    # print("cache miss")
     networth = 0
     for transaction in transactions:
         networth += get_transac_yield(transaction[0])
 
-    _networth_cache=[networth, now]
+    _networth_cache["value"] = networth
+    _networth_cache["timestamp"] = now
+    _networth_cache["table_detector"]= len(transactions)
 
+
+    conn.close()
     return networth
 
 
@@ -217,7 +155,7 @@ def get_yesterdays_date():
         print(f"Error calculating yesterday's date: {e}")
         return None
 
-
+#cache yersterdays closing price, and the date so it does not need api calls everytime
 def index_daily_increase(stock):
     """
     get the %age increase in price since yersterday
@@ -282,7 +220,7 @@ def get_total_capital():
 
     return total_capital
 
-
+#relies on API call all the time
 def search_stock_symbol(input):
     #Using finnhub API to find a stock symbol from a search
     
@@ -299,7 +237,7 @@ def get_profit():
 
     return profit
 
-
+#relies on API call all the time, but yahoo is not as limited as finnhub
 def fetch_stock_df(ticker, period="1mo", interval="1d"):
     """
     fetches stock history
@@ -353,7 +291,7 @@ def get_networth_history(limit=None):
         rows = rows[-limit:]
     return rows
 
-
+#change this so it is gotten from transac table insteaad of API calls
 def get_shares_owned(stock):
     """
     Sum shares owned for a particular `stock` across every transaction of that symbol,
@@ -378,3 +316,93 @@ def get_shares_owned(stock):
             continue
 
     return total_shares
+
+
+
+# =============================================================================
+# DB functions
+# =============================================================================
+
+def get_name():
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    try:
+        c.execute("SELECT name FROM user")
+        conn.commit()
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    names=c.fetchall()
+    conn.close()
+
+    if len(names)==0:
+        return "None"
+    
+    name=names[len(names)-1][0]
+
+    return name
+
+
+def set_user_name(name: str):
+    if len(name)==0:
+        return
+    
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    try:
+        # INSERT OR REPLACE with a fixed id=1 keeps this a single "current user"
+        # row instead of accumulating a new row every time the name changes.
+        c.execute("INSERT OR REPLACE INTO user (id, name) VALUES (1, ?)", (name,))
+        conn.commit()
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    conn.close()
+
+def resetPortfolio():
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    try:
+        c.execute("DELETE FROM networth")
+        c.execute("DELETE FROM transacs")
+        conn.commit()
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    conn.close()
+
+def create_transac(stock: str, capital) -> int:
+#create a transaction into the database
+
+    # validate that capital is numeric
+    try:
+        capital = float(capital)
+    except ValueError:
+        print("Please enter a valid capital for this transaction (should be a number higher than $0.0)")
+
+    # validate that capital is greater than 0.0
+    if capital <= 0.0:
+        raise Exception("Please enter a valid capital for this transaction (should be a number higher than $0.0)")
+
+    #compute the number of shares bought
+    price= get_quote(stock)
+    shares= capital / price
+
+
+###Insert the transaction in the database###
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    try:
+        c.execute("INSERT INTO transacs (date, stock, capital, shares) VALUES (datetime(),?,?,?)", (stock, capital, shares))
+        conn.commit()
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    conn.close()
+
+    return 1
+
