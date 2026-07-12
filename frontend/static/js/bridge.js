@@ -1,14 +1,15 @@
 // Every page talks to Python through this one file instead of calling
-// `window.pywebview.api.*` directly. Two reasons:
+// `window.pywebview.api.*` directly.
 //
 //   1. pywebview injects `window.pywebview` a moment *after* the page loads,
 //      so calling the API too early just throws "pywebview is undefined".
 //      `waitForPywebview()` below handles that race condition once, here,
 //      instead of every page having to remember to wait for it.
 //
-//   2. While you're just tweaking HTML/CSS, it's much faster to open these
-//      pages directly in a normal browser than to relaunch the whole .exe
-//      each time. When `window.pywebview` isn't there (i.e. you're in a
+//   2. Use while you're just tweaking and testing HTML/CSS with mock data
+//      it's much faster to open these pages directly in a normal browser than to relaunch the whole .exe
+//      each time. 
+//      When `window.pywebview` isn't there (i.e. you're in a
 //      browser, not the app), every function below silently falls back to
 //      the MOCK data at the bottom of this file, so the UI still renders.
 // =============================================================================
@@ -17,14 +18,14 @@ function waitForPywebview() {
   return new Promise((resolve) => {
     if (window.pywebview && window.pywebview.api) return resolve(true);
     window.addEventListener("pywebviewready", () => resolve(true), { once: true });
-    // If pywebview never shows up at all (plain browser preview), stop
-    // waiting after 400ms and fall back to mock data instead of hanging.
+    // If pywebview never shows up at all (plain browser preview), 
+    // stop waiting after 400ms and fall back to mock data instead of hanging.
     setTimeout(() => resolve(!!(window.pywebview && window.pywebview.api)), 400);
   });
 }
 
-// Mock data used only for browser-preview mode (see note above). Shapes here
-// must match exactly what api.py actually returns — see api.py's docstrings.
+// Mock data used only for browser-preview mode (see note above).
+// must matches exactly what api.py actually returns
 const MOCK = {
   get_portfolio_value: () => 2505.75,
   get_networth_history: () => [

@@ -91,6 +91,12 @@ function indexFundCardHtml(fund, quote) {
           <span class="text-label-mono text-primary-fixed/70">${changeStr}</span>
         </div>
       </div>
+
+      <div class="flex justify-end mt-sm">
+        <p></p>
+        <a href="invest.html?symbol=${fund.symbol}" class="bg-primary-container/10 text-primary-fixed text-label-mono px-md py-xs rounded-full border border-primary-fixed/20 hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors">Invest</a>
+      </div>
+
     </div>
   </div>`;
 }
