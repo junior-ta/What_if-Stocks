@@ -87,8 +87,16 @@ def resetPortfolio():
     conn.commit()
     conn.close()
 
+_quote_cache = {}  #a dict with keys: symbol and values: (price, timestamp)
 def get_quote(stock):
-    return finnhub_client.quote(stock)["c"]
+    now = datetime.time()
+    if stock in _quote_cache and now - _quote_cache[stock][1] < 120:  #only update cache every 2 mins
+        return _quote_cache[stock][0]
+    
+    price = finnhub_client.quote(stock)["c"]
+    _quote_cache[stock] = (price, now)
+
+    return price
 
 
 def create_transac(stock: str, capital) -> int:
@@ -161,17 +169,23 @@ def get_transac_yield(id: int) -> float:
 
     ###calculate the yield###
     buying_p = yf.Ticker(stock).history(start=transac_date).iloc[0]["Close"]
-    actual_p = finnhub_client.quote(stock)["c"]
+    actual_p = get_quote(stock)
 
     shares = capital / buying_p
     revenue = shares * actual_p
 
     return revenue
 
-
+_networth_cache=[]
 def get_networth() -> float:
     #get the total portfolio value
 
+    #check cache
+    now = datetime.time()
+    if len(_networth_cache)>0 and now - _networth_cache[1] < 120:  #only update cache every 2 mins
+        return _networth_cache[0]
+
+    #cache failed or expired, compute networth
     conn = sqlite3.connect("wis.db")
     c = conn.cursor()
 
@@ -186,6 +200,8 @@ def get_networth() -> float:
     networth = 0
     for transaction in transactions:
         networth += get_transac_yield(transaction[0])
+
+    _networth_cache=[networth, now]
 
     return networth
 
@@ -217,7 +233,7 @@ def index_daily_increase(stock):
 
     # get current price
     try:
-        current_p = finnhub_client.quote(stock)["c"]
+        current_p = get_quote(stock)
     except Exception as e:
         print(f"Error getting today's price: {e}")
         return None
