@@ -6,7 +6,7 @@ c= conn.cursor()
 
 #create table
 c.execute(""" CREATE TABLE IF NOT EXISTS transacs
-          (id INTEGER PRIMARY KEY, date TEXT, stock TEXT, capital FLOAT)
+          (id INTEGER PRIMARY KEY, date TEXT, stock TEXT, capital FLOAT, shares FLOAT)
 """)
 
 #try insert data

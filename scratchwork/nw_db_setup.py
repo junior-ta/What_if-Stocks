@@ -6,8 +6,12 @@ c= conn.cursor()
 
 #create table
 c.execute(""" CREATE TABLE IF NOT EXISTS networth
-          (id INTEGER PRIMARY KEY, nw FLOAT, date TEXT)
+          (id INTEGER PRIMARY KEY, nw FLOAT)
 """)
+
+# c.execute("DROP TABLE IF EXISTS transacs")
+# c.execute("DROP TABLE IF EXISTS networth")
+# c.execute("DROP TABLE IF EXISTS user")
 
 # c.execute("INSERT INTO networth (nw, date) VALUES (9867, '2026-06-08')")
 # c.execute("INSERT INTO networth (nw, date) VALUES (9100, '2026-06-09')")
