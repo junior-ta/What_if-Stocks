@@ -46,6 +46,26 @@ _ensure_schema()
 # =============================================================================
 # Functionalities
 # =============================================================================
+def get_name():
+    conn = sqlite3.connect("wis.db")
+    c = conn.cursor()
+
+    try:
+        c.execute("SELECT name FROM user")
+        conn.commit()
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+    names=c.fetchall()
+    conn.close()
+
+    if len(names)==0:
+        return "None"
+    
+    name=names[len(names)-1][0]
+
+    return name
+
 
 _quote_cache = {}  #a dict with keys: symbol and values: (price, timestamp)
 def get_quote(stock):
@@ -76,6 +96,43 @@ def get_transacs():
     conn.close()
     return transactions
 
+def get_capital(id: int):
+    #get capital from a specific transaction
+    
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
+
+        try:
+            c.execute("SELECT capital FROM transacs WHERE id=?", (id,))
+            capital = c.fetchall()[0][0]
+        except sqlite3.Error as e:
+            print("Database error:", e)
+            capital=0
+
+    conn.close()
+
+    return capital
+
+def get_total_capital():
+#get total money invested ever
+   
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
+
+        try:
+            c.execute("SELECT capital FROM transacs")
+            rows = c.fetchall()
+
+        except sqlite3.Error as e:
+            print("Database error:", e)
+            rows=[]
+
+        total_capital = 0
+        for row in rows:
+            total_capital += row[0]
+
+    conn.close()
+    return total_capital
 
 def get_transac_yield(id: int) -> float:
 # get how much a particular transaction earned you
@@ -125,7 +182,7 @@ def get_networth() -> float:
 
     #check cache only if there was no new transactions
     if "table_detector" in _networth_cache and _networth_cache["table_detector"]==len(transactions): 
-        if now - _networth_cache["timestamp"] < 120 and _networth_cache["value"] is not None:  #cache misses if its >2mins old
+        if now - _networth_cache["timestamp"] < 90 and _networth_cache["value"] is not None:  #cache misses if its >2mins old
             # print("cache hit")
             return _networth_cache["value"]
 
@@ -139,8 +196,6 @@ def get_networth() -> float:
     _networth_cache["timestamp"] = now
     _networth_cache["table_detector"]= len(transactions)
 
-
-    conn.close()
     return networth
 
 
@@ -155,21 +210,28 @@ def get_yesterdays_date():
         print(f"Error calculating yesterday's date: {e}")
         return None
 
-#cache yersterdays closing price, and the date so it does not need api calls everytime
+
+_prev_clos_p={}
 def index_daily_increase(stock):
     """
     get the %age increase in price since yersterday
     """
     
-    # get closing price from the previous day (OR THE LAST DAY WE HAVE DATA FOR)
+# get closing price from the previous day (OR THE LAST DAY WE HAVE DATA FOR)
+    #cache hit
+    if stock in _prev_clos_p:  #only update cache every time the app is reopened (not likely to have the app opened all day)
+        old_p= _prev_clos_p[stock]
 
-    try:
-        old_p = yf.Ticker(stock).history(period='2d').iloc[0]["Close"]
-    except Exception as e:
-        print(f"Error getting yesterday's price: {e}")
-        return None
+    #cache miss
+    else:
+        try:
+            old_p = yf.Ticker(stock).history(period='2d').iloc[0]["Close"]
+            _prev_clos_p[stock]= old_p
+        except Exception as e:
+            print(f"Error getting yesterday's price: {e}")
+            return None
 
-    # get current price
+# get current price
     try:
         current_p = get_quote(stock)
     except Exception as e:
@@ -181,46 +243,7 @@ def index_daily_increase(stock):
     return increase
 
 
-def get_capital(id: int):
-    #get capital from a specific transaction
-    
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    try:
-        c.execute("SELECT capital FROM transacs WHERE id=?", (id,))
-    except sqlite3.Error as e:
-        print("Database error:", e)
-
-    capital = c.fetchall()[0][0]
-
-    conn.close()
-
-    return capital
-
-
-def get_total_capital():
-   #get total money invested ever
-   
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    try:
-        c.execute("SELECT capital FROM transacs")
-    except sqlite3.Error as e:
-        print("Database error:", e)
-
-    rows = c.fetchall()
-
-    conn.close()
-
-    total_capital = 0
-    for row in rows:
-        total_capital += row[0]
-
-    return total_capital
-
-#relies on API call all the time
+#relies on API call all the time (I will regulate on the frontend)
 def search_stock_symbol(input):
     #Using finnhub API to find a stock symbol from a search
     
@@ -232,12 +255,11 @@ def search_stock_symbol(input):
 def get_profit():
     #Get the total profit made from all investments
 
-
     profit = get_networth() - get_total_capital()
 
     return profit
 
-#relies on API call all the time, but yahoo is not as limited as finnhub
+#relies on API call all the time, but yahoo is not as limited as finnhub (this is crucial for the charts)
 def fetch_stock_df(ticker, period="1mo", interval="1d"):
     """
     fetches stock history
@@ -253,27 +275,6 @@ def fetch_stock_df(ticker, period="1mo", interval="1d"):
     df.columns = [str(c).lower() for c in df.columns]
     return df[["date", "close"]]
 
-
-def log_networth_snapshot():
-    """
-    Insert today's computed net worth into the networth table.
-    1 row max per day
-    """
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-    c.execute("SELECT id FROM networth WHERE date = ?", (today,))
-    already_logged = c.fetchone()
-
-    if not already_logged:
-        nw = get_networth()
-        c.execute("INSERT INTO networth (nw, date) VALUES (?, ?)", (nw, today))
-        conn.commit()
-
-    conn.close()
-
-
 def get_networth_history(limit=None):
     """
     Read the networth table back as a time-ordered list, for the
@@ -281,96 +282,83 @@ def get_networth_history(limit=None):
 
     Returns: [(id, nw, date), ...] ordered oldest -> newest.
     """
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-    c.execute("SELECT * FROM networth ORDER BY id ASC")
-    rows = c.fetchall()
-    conn.close()
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    if limit:
-        rows = rows[-limit:]
+        try:
+            c.execute("SELECT * FROM networth ORDER BY id ASC")
+            rows = c.fetchall()
+
+            if limit:
+                rows = rows[-limit:]
+
+        except sqlite3.Error as e:
+            print("Database error:", e)
+            rows=[]
+
+    conn.close()
     return rows
 
-#change this so it is gotten from transac table insteaad of API calls
+
 def get_shares_owned(stock):
     """
-    Sum shares owned for a particular `stock` across every transaction of that symbol,
-    using the exact same "capital / closing price on the transaction date".
+    Sum shares owned for a particular `stock` across every transaction of that symbol
     """
 
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-    c.execute("SELECT * FROM transacs WHERE stock = ?", (stock,))
-    rows = c.fetchall()
-    conn.close()
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    total_shares = 0.0
-    for row in rows:
-        transac_date = row[1].split(" ")[0]
-        capital = row[3]
         try:
-            buying_p = yf.Ticker(stock).history(start=transac_date).iloc[0]["Close"]
-            total_shares += capital / buying_p
-        except (IndexError, KeyError):
-            # No price data found for that date — skip 
-            continue
+            c.execute("SELECT * FROM transacs WHERE stock = ?", (stock,))
+            rows = c.fetchall()
+        
+        except sqlite3.Error as e:
+            print("Database error:", e)
+            rows=[]
+        
 
+        total_shares = 0.0
+        for row in rows:
+            total_shares += row[4]
+
+    conn.close()
     return total_shares
 
 
 
 # =============================================================================
-# DB functions
+# DB modification functions
 # =============================================================================
-
-def get_name():
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
-
-    try:
-        c.execute("SELECT name FROM user")
-        conn.commit()
-    except sqlite3.Error as e:
-        print("Database error:", e)
-
-    names=c.fetchall()
-    conn.close()
-
-    if len(names)==0:
-        return "None"
-    
-    name=names[len(names)-1][0]
-
-    return name
-
 
 def set_user_name(name: str):
     if len(name)==0:
         return
     
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    try:
-        # INSERT OR REPLACE with a fixed id=1 keeps this a single "current user"
-        # row instead of accumulating a new row every time the name changes.
-        c.execute("INSERT OR REPLACE INTO user (id, name) VALUES (1, ?)", (name,))
-        conn.commit()
-    except sqlite3.Error as e:
-        print("Database error:", e)
+        try:
+            # INSERT OR REPLACE with a fixed id=1 keeps this a single "current user"
+            # row instead of accumulating a new row every time the name changes.
+            c.execute("INSERT OR REPLACE INTO user (id, name) VALUES (1, ?)", (name,))
+            conn.commit()
+
+        except sqlite3.Error as e:
+            print("Database error:", e)
 
     conn.close()
 
 def resetPortfolio():
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    try:
-        c.execute("DELETE FROM networth")
-        c.execute("DELETE FROM transacs")
-        conn.commit()
-    except sqlite3.Error as e:
-        print("Database error:", e)
+        try:
+            c.execute("DELETE FROM networth")
+            c.execute("DELETE FROM transacs")
+            conn.commit()
+
+        except sqlite3.Error as e:
+            print("Database error:", e)
 
     conn.close()
 
@@ -393,16 +381,34 @@ def create_transac(stock: str, capital) -> int:
 
 
 ###Insert the transaction in the database###
-    conn = sqlite3.connect("wis.db")
-    c = conn.cursor()
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
 
-    try:
-        c.execute("INSERT INTO transacs (date, stock, capital, shares) VALUES (datetime(),?,?,?)", (stock, capital, shares))
-        conn.commit()
-    except sqlite3.Error as e:
-        print("Database error:", e)
+        try:
+            c.execute("INSERT INTO transacs (date, stock, capital, shares) VALUES (datetime(),?,?,?)", (stock, capital, shares))
+            conn.commit()
+        except sqlite3.Error as e:
+            print("Database error:", e)
 
     conn.close()
 
     return 1
 
+def log_networth_snapshot():
+    """
+    Insert today's computed net worth into the networth table.
+    1 row max per day
+    """
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    with sqlite3.connect("wis.db") as conn:
+        c = conn.cursor()
+        c.execute("SELECT id FROM networth WHERE date = ?", (today,))
+        already_logged = c.fetchone()
+
+        if not already_logged:
+            nw = get_networth()
+            c.execute("INSERT INTO networth (nw, date) VALUES (?, ?)", (nw, today))
+            conn.commit()
+
+    conn.close()
