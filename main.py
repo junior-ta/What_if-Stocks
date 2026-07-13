@@ -1,11 +1,22 @@
 """
-  1. WORKING DIRECTORY: sqlite3.connect("wis.db") resolves relative to
-     whatever the current working directory happens to be when the
-     process starts. 
-     So we explicitly chdir() to this file's own directory
-     first, before backend (and therefore wis.db) is ever touched. This
-     also means wis.db always lives right next to main.py / CyberTrade.exe
-     — exactly where your setup scripts already created it.
+  1. WORKING DIRECTORY: 
+        A. RESOURCE_DIR — read-only files bundled INTO the app (your frontend/
+            HTML/CSS/JS). Fine to ship inside the packaged app, since nothing
+            ever needs to write to them.
+
+        B. DATA_DIR — writable user data (wis.db, .env). This CANNOT safely
+            live "next to the executable" cross-platform:
+            
+            Instead, DATA_DIR uses `platformdirs`, which picks the OS's actual
+            standard "app data" folder:
+            - Windows: C:\\Users\\<you>\\AppData\\Local\\CyberTrade\\
+            - macOS:   ~/Library/Application Support/CyberTrade/
+            - Linux:   ~/.local/share/CyberTrade/
+            wis.db and .env live there, and main.py chdir()s into it before
+            backend/__init__.py is ever imported — so its `sqlite3.connect
+            ("wis.db")` (a relative path) always resolves to the right place,
+            on every OS, without backend/__init__.py needing to know anything
+            about any of this.
 
   2. LOGIN SNAPSHOT: This app doesn't have an explicit login screen,
      so "launching the app" IS the login event — we call it once here,
@@ -15,30 +26,46 @@
 
 import os
 import sys
+import shutil
 
-#Fix the working directory BEFORE importing backend/api
-    # getattr(sys, "frozen", False) is True when running as a PyInstaller .exe.
+from platformdirs import user_data_dir
+
+APP_NAME = "WhatifTrading"
+
+###RESOURCE_DIR: for the .exe
 if getattr(sys, "frozen", False):
-    APP_DIR = os.path.dirname(sys.executable) # exe mode, gives path to app.exe
+    RESOURCE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable)) # exe mode, gives path to app.exe
 else:
-    APP_DIR = os.path.dirname(os.path.abspath(__file__)) #python script mode
-os.chdir(APP_DIR)
-
-import webview  # noqa: E402  (always import after chdir)
-from api import Api  # noqa: E402
-import backend  # noqa: E402
+    RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__)) #python script mode
 
 
 def resource_path(relative_path):
-    """
-    Resolve a path to a bundled resource (the frontend/ folder) both:
-    -when run normally main.py (no sys._Meipass) 
-    and
-    -when frozen by PyInstaller (which unpacks bundled data into a temp folder referenced by sys._MEIPASS).
-    """
-    base_path = getattr(sys, "_MEIPASS", APP_DIR)
-    return os.path.join(base_path, relative_path)
+    #Path to the bundled, read-only resource (currently just frontend/).
+    return os.path.join(RESOURCE_DIR, relative_path)
 
+
+###DATA_DIR: where wis.db / .env live
+DATA_DIR = user_data_dir(APP_NAME, appauthor=False)
+os.makedirs(DATA_DIR, exist_ok=True)
+
+# First launch on this machine: drop a template .env + a README right in DATA_DIR 
+if not os.path.exists(os.path.join(DATA_DIR, ".env")):
+    example = resource_path(".env.example")
+    if os.path.exists(example):
+        shutil.copy(example, os.path.join(DATA_DIR, ".env"))
+    with open(os.path.join(DATA_DIR, "READ ME - add your API key here.txt"), "w") as f:
+        f.write(
+            "What if - Trading stores its database and settings in this folder.\n\n"
+            "To get live stock prices working, open the '.env' file in this\n"
+            "same folder with a text editor and paste in a free API key from\n"
+            "https://finnhub.io/register\n"
+        )
+
+os.chdir(DATA_DIR)
+
+import webview  # noqa: E402 
+from api import Api 
+import backend  
 
 def main():
     # Log today's net worth snapshot once per app launch, so the dashboard's
