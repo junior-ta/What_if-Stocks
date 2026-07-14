@@ -50,9 +50,9 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # First launch on this machine: drop a template .env + a README right in DATA_DIR 
 if not os.path.exists(os.path.join(DATA_DIR, ".env")):
-    example = resource_path(".env.example")
-    if os.path.exists(example):
-        shutil.copy(example, os.path.join(DATA_DIR, ".env"))
+    template = resource_path(".env.example")
+    if os.path.exists(template):
+        shutil.copy(template, os.path.join(DATA_DIR, ".env"))
     with open(os.path.join(DATA_DIR, "READ ME - add your API key here.txt"), "w") as f:
         f.write(
             "What if - Trading stores its database and settings in this folder.\n\n"
