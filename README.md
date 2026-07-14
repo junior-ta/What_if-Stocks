@@ -14,9 +14,25 @@ NB: This is not a trading simulation app. You cannot sell the virtaul stocks (yo
 
 # Installation instructions (see install.md for a detailed guide)
 ## Windows
-xxxx
+1. Download **`WhatifTrading.zip`** from **[Releases](../../releases)** page of this repository. Extract it, run **`WhatifTrading.exe`** once and then close it (you must do this for proper set up).
+2. Get a free API key from the dashboard on **[finnhub.io/register](https://finnhub.io/register)** by creating a free account.
+3. Move to the data file by entering the following in your file explorer address bar  
+    ```
+    %LOCALAPPDATA%\CyberTrade.
+    ```
+4. open the file named **`.env`**. add your API key to the file by modifying this: finnhub_key=paste_your_key_here
+5. You can now re-open the app as it is ready to be used.
+
 ## MAC OS
-xxxx.\ 
+1. Download **`WhatifTrading-macOS.zip`** from **[Releases](../../releases)** page of this repository. Extract it, run **`WhatifTrading.app`** once and then close it (you must do this for proper set up).
+2. Get a free API key from the dashboard on **[finnhub.io/register](https://finnhub.io/register)** by creating a free account.
+3. Open **Finder**, then in the menu bar click **Go → Go to Folder...**
+   (or press `Cmd+Shift+G`), and paste in:
+   ```
+   ~/Library/Application Support/CyberTrade
+   ```
+4. open the file named **`.env`** with TextEdit. add your API key to the file by modifying this: finnhub_key=paste_your_key_here
+5. You can now re-open the app as it is ready to be used.
 
 <br><br>
 
@@ -115,3 +131,8 @@ frontend/
       charts.js               Plotly "glow" chart helpers
 ```
 
+## take a look
+![Dashboard](medias/dashboard2.png)
+![Dashboard](medias/sc1.png)
+![Dashboard](medias/sc6.png)
+![Dashboard](medias/sc3.png)
