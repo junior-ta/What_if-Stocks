@@ -36,7 +36,7 @@ Pick your operating system below:
 
 ### 3. Add your free API key
 
-CyberTrade uses [Finnhub](https://finnhub.io) for live stock prices —
+Whatif - Trading uses [Finnhub](https://finnhub.io) for live stock prices —
 you need your own free key, or prices won't load.
 
 1. Go to **[finnhub.io/register](https://finnhub.io/register)** and
