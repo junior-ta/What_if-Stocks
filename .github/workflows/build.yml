@@ -14,12 +14,10 @@ jobs:
         include:
           - os: windows-latest
             add_data_sep: ";" # PyInstaller --add-data uses ; on Windows
-            artifact_name: WhatifTrading
-          -Windows
+            artifact_name: WhatifTrading-Windows
           - os: macos-latest
             add_data_sep: ":" 
-            artifact_name: WhatifTrading
-          -macOS
+            artifact_name: WhatifTrading-macOS
 
     runs-on: ${{ matrix.os }}
 
