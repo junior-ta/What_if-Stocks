@@ -37,7 +37,6 @@ jobs:
         shell: bash
         run: >
           pyinstaller --noconfirm --windowed --name WhatifTrading
-        
           --add-data "frontend${{ matrix.add_data_sep }}frontend"
           --add-data ".env.example${{ matrix.add_data_sep }}."
           main.py
@@ -46,16 +45,14 @@ jobs:
       - name: Zip build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: Compress-Archive -Path dist WhatifTrading
-      /* -DestinationPath ${{ matrix.artifact_name }}.zip
+        run: Compress-Archive -Path dist/WhatifTrading/* -DestinationPath ${{ matrix.artifact_name }}.zip
 
       - name: Zip build (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
           cd dist
-          zip -r ../${{ matrix.artifact_name }}.zip WhatifTrading
-        .app
+          zip -r ../${{ matrix.artifact_name }}.zip WhatifTrading.app
 
       # --- Keep the zip available from the Actions tab too, even without a release ---
       - name: Upload build artifact
