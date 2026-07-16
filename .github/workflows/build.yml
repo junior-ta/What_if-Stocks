@@ -1,0 +1,74 @@
+name: Build WhatifTrading
+
+on:
+  push:
+    tags:
+      - "v*" # e.g. v1.0.0 — pushing a tag triggers an automatic release
+  workflow_dispatch: 
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            add_data_sep: ";" # PyInstaller --add-data uses ; on Windows
+            artifact_name: WhatifTrading
+          -Windows
+          - os: macos-latest
+            add_data_sep: ":" 
+            artifact_name: WhatifTrading
+          -macOS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        shell: bash
+        run: >
+          pyinstaller --noconfirm --windowed --name WhatifTrading
+        
+          --add-data "frontend${{ matrix.add_data_sep }}frontend"
+          --add-data ".env.example${{ matrix.add_data_sep }}."
+          main.py
+
+      # --- Package the build into a single zip, per OS ------------------
+      - name: Zip build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist WhatifTrading
+      /* -DestinationPath ${{ matrix.artifact_name }}.zip
+
+      - name: Zip build (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          cd dist
+          zip -r ../${{ matrix.artifact_name }}.zip WhatifTrading
+        .app
+
+      # --- Keep the zip available from the Actions tab too, even without a release ---
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
+
+      # --- Attach directly to a GitHub Release, only when triggered by a tag ---
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}.zip
